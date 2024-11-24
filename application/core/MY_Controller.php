@@ -16,17 +16,18 @@ class MY_Controller extends CI_Controller {
     }
 
     private function validate_token() {
-        // $headers = $this->input->request_headers();
-        // $token =  isset($headers['Authorization']) ? $headers['Authorization'] : null;
-        $token =  "";
+        $headers = $this->input->request_headers();
+        $token =  isset($headers['Authorization']) ? $headers['Authorization'] : null;
+        // $token =  "";
 
-        if ($this->input->server('REQUEST_METHOD') == 'POST'){
-            $token =  $this->input->post("token");
+        // if ($this->input->server('REQUEST_METHOD') == 'POST'){
+        //     $token =  $this->input->post("token");
 
-        }else if ($this->input->server('REQUEST_METHOD') == 'GET'){
-            $token =  $this->input->get("token");
+        // }else if ($this->input->server('REQUEST_METHOD') == 'GET'){
+        //     $token =  $this->input->get("token");
 
-        }
+        // }
+        
         // Remove 'Bearer ' prefix if present
         if (strpos($token, 'Bearer ') === 0) {
             $token = substr($token, 7);

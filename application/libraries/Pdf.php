@@ -18,7 +18,7 @@ use Dompdf\Dompdf;
 
 */
 
-require_once FCPATH . 'vendor/autoload.php';
+require_once(dirname(__FILE__) . '/dompdf/autoload.inc.php');
 
 class Pdf extends DOMPDF
 {
@@ -46,15 +46,6 @@ class Pdf extends DOMPDF
         $html = $this->ci()->load->view($view, $data, TRUE);
         $this->load_html($html);
     }
-    public function load_view_lp($name,$view, $data = array())
-    {   
-        
-        $this->setPaper('legal', 'portrait');
-        $html = $this->ci()->load->view($view, $data, TRUE);
-        $this->load_html($html);
-        $this->render();
-        $this->stream($name."-PDS.pdf", array('Attachment'=> 0));
-    }
     public function load_view2($name,$view, $data = array())
     {   
         
@@ -63,6 +54,41 @@ class Pdf extends DOMPDF
         $this->load_html($html);
         $this->render();
         $this->stream($name."-PDS.pdf", array('Attachment'=> 0));
+    }
+    public function load_view2_portrait($name,$view, $data = array())
+    {   
+        
+        $this->setPaper('legal');
+        $html = $this->ci()->load->view($view, $data, TRUE);
+        $this->load_html($html);
+        $this->render();
+
+        $x          = 490;
+        $y          = 980;
+        $text       = "Page {PAGE_NUM} of {PAGE_COUNT}";     
+        $font       = $this->getFontMetrics()->get_font('Helvetica', 'normal');   
+        $size       = 12;    
+        $color      = array(0,0,0);
+        $word_space = 0.0;
+        $char_space = 0.0;
+        $angle      = 0.0;
+
+        $this->getCanvas()->page_text(
+        $x, $y, $text, $font, $size, $color, $word_space, $char_space, $angle
+        );
+
+        $this->stream($name.".pdf", array('Attachment'=> 0));
+    }
+    public function load_view3_portrait($name,$view, $data = array())
+    {   
+        
+        $this->set_option('isRemoteEnabled', TRUE);
+        $this->set_option('isHtml5ParserEnabled', TRUE);
+        $this->setPaper('legal');
+        $html = $this->ci()->load->view($view, $data, TRUE);
+        $this->load_html($html);
+        $this->render();
+        $this->stream($name.".pdf", array('Attachment'=> 0));
     }
     public function load_view4_portrait($name,$view, $data = array())
     {   
@@ -74,34 +100,30 @@ class Pdf extends DOMPDF
         $this->render();
         $this->stream($name.".pdf", array('Attachment'=> 0));
     }
-    public function load_view5_portrait($name,$view, $data = array())
+    public function load_view2_portraitwpage($name,$view, $data = array())
     {   
         
-        // $customPaper = array(0, 0, 147.40, 209.76);
-        // $customPaper = array(0,0,279,300);
-        $customPaper = array(0,0,100,148);
-        // $dompdf->set_paper($customPaper);
-        $this->setPaper($customPaper);
-        // $this->setPaper('Continuous', 'portrait');
-        // $this->setPaper('Continuous', 'portrait');
+        $this->setPaper('legal');
         $html = $this->ci()->load->view($view, $data, TRUE);
         $this->load_html($html);
         $this->render();
-        $this->stream($name.".pdf", array('Attachment'=> 0));
-    }
-	public function load_view6_portrait($name,$view, $data = array())
-    {   
-        
-        // $customPaper = array(0, 0, 147.40, 209.76);
-        // $customPaper = array(0,0,279,300);
-        $customPaper = array(0,0,80,297);
-        // $dompdf->set_paper($customPaper);
-        $this->setPaper($customPaper);
-        // $this->setPaper('Continuous', 'portrait');
-        // $this->setPaper('Continuous', 'portrait');
-        $html = $this->ci()->load->view($view, $data, TRUE);
-        $this->load_html($html);
-        $this->render();
+
+        // Parameters
+        $x          = 505;
+        $y          = 790;
+        $text       = "{PAGE_NUM} of {PAGE_COUNT}";     
+        $font       = $dompdf->getFontMetrics()->get_font('Helvetica', 'normal');   
+        $size       = 10;    
+        $color      = array(0,0,0);
+        $word_space = 0.0;
+        $char_space = 0.0;
+        $angle      = 0.0;
+
+        $dompdf->getCanvas()->page_text(
+        $x, $y, $text, $font, $size, $color, $word_space, $char_space, $angle
+        );
+
+
         $this->stream($name.".pdf", array('Attachment'=> 0));
     }
 }

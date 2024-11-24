@@ -7,7 +7,7 @@
  */
  class UserModel extends CI_Model{
 
-    public function addUser($payload){
+    public function add($payload){
         return $this->db->set($payload)->get_compiled_insert('users');
     }
 
@@ -66,6 +66,29 @@
 
 
         return  $this->db->query($sql)->result();
+    }
+
+    function generateUserID($prefix = 'USER') {
+        // Get the current timestamp (uniqueness based on time)
+        $timestamp = time();
+        
+        // Generate a random 4-digit number
+        $randomNumber = rand(1000, 9999);
+        
+        // Combine prefix, timestamp, and random number to create a unique ID
+        $studentID = $prefix . '-' . $timestamp . '-' . $randomNumber;
+        
+        return $studentID;
+    }
+
+    public function isUserIDExists($user_id) {
+        $this->db->select('user_id');
+        $this->db->from('users');  // Assuming the student data is in a table named 'students'
+        $this->db->where('user_id', $user_id);
+        $query = $this->db->get();
+    
+        // If any rows are returned, the student_id exists
+        return ($query->num_rows() > 0);
     }
    
  }

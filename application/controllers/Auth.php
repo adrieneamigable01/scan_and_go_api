@@ -65,7 +65,7 @@
                 );
             }else{
                //set payload
-                $payload = array('email' => $username, 'password' => $password);
+                $payload = array('username' => $username, 'password' => $password);
                 /** 
                     * Call the auth  model
                     * then call the authenticate method
@@ -80,10 +80,10 @@
 
                         $data = array(
                             'user_id'        => $authenticate[0]->user_id,
-                            'fullName'      => $authenticate[0]->last_name.', '.$authenticate[0]->first_name,
+                            'fullN_name'      => $authenticate[0]->last_name.', '.$authenticate[0]->first_name,
                             'first_name'     => $authenticate[0]->first_name,
                             'last_name'      => $authenticate[0]->last_name,
-                            'email'         => $authenticate[0]->email,
+                            'username'         => $authenticate[0]->username,
                             'user_type'      => $authenticate[0]->user_type,
                             'created_at'   => $authenticate[0]->created_at,
                             'updated_at'   => $authenticate[0]->updated_at,
