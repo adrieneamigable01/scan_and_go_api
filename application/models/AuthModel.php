@@ -46,7 +46,12 @@
 
         // Execute the query with the payload's values (email and password)
         $query = $this->db->query($sql, array($payload['username'], $payload['password']));
-
+        $result = $query->result();
+        if( $query->num_rows() > 0){
+            if($result[0]->user_type == "student"){
+                
+            }
+        }
         // Return the result as an array
         return $query->result();
     }

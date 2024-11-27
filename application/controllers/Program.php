@@ -4,7 +4,7 @@
      * @version 0.1.0
     */ 
 
-    class Program extends MY_Controller{
+    class Program extends CI_Controller{
         /**
             * Class constructor.
             *
@@ -54,7 +54,9 @@
              * @var string session data $accessKey
             */
             try{
+                $payloadWhereIn = array();
                 $college_id = $this->input->get("college_id");
+                $college_ids = $this->input->get("college_ids");
                 /** 
                     * Call the supploer model
                     * then call the getUser method
@@ -62,9 +64,15 @@
                 */
                 $payload = array(
                     'program.is_active' => 1,
-                    'college_id' => $college_id,
                 );
-                $request = $this->ProgramModel->get($payload);
+                if(isset($college_id)){
+                    $payloadWhereIn['college_id'] = $college_id; 
+                }
+
+                if(isset($college_ids)){
+                    $payloadWhereIn['college_id'] = $college_ids; 
+                }
+                $request = $this->ProgramModel->get($payload,$payloadWhereIn);
                 $return = array(
                     '_isError'      => false,
                     'message'        =>'Success',

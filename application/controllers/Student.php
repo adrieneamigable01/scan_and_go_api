@@ -129,7 +129,6 @@
             $section_id = $this->input->post('section_id');
             $email = $this->input->post('email');
             $mobile = $this->input->post('mobile');
-            $mobile = $this->input->post('mobstudent_imageile');
             $dateCreated = date("Y-m-d");
         
             // Validation checks
@@ -184,7 +183,7 @@
                         'year_level_id'         => $year_level_id,
                         'section_id'            => $section_id,
                         'email'                 => $email,
-                        'students.mobile'       => $mobile,
+                        'mobile'       => $mobile,
                         'created_at' => date("Y-m-d"),
                     );
         

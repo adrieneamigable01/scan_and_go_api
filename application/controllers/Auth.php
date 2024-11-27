@@ -15,6 +15,9 @@
             date_default_timezone_set('Asia/Manila');
             $this->load->helper('jwt');
             $this->load->model('AuthModel');
+            $this->load->model('StudentModel');
+            $this->load->model('TeacherModel');
+            $this->load->model('UserModel');
             $this->load->library('Response',NULL,'response');
            
         }
@@ -73,14 +76,14 @@
                 */
                 $authenticate = $this->AuthModel->authenticate($payload);
                 
-               
+           
                 try{
                     if(count($authenticate) > 0){
      
 
                         $data = array(
                             'user_id'        => $authenticate[0]->user_id,
-                            'fullN_name'      => $authenticate[0]->last_name.', '.$authenticate[0]->first_name,
+                            'full_name'      => $authenticate[0]->last_name.', '.$authenticate[0]->first_name,
                             'first_name'     => $authenticate[0]->first_name,
                             'last_name'      => $authenticate[0]->last_name,
                             'username'         => $authenticate[0]->username,
@@ -124,16 +127,259 @@
             }
             $this->response->output($return,1); //return the json encoded data
         }
+        public function register(){
+
+        }
+        public function addTeacher() {
+            $transQuery = array();
+        
+            // Retrieve form data using the 'name' attributes from the HTML form
+        
+            $first_name = $this->input->post('first_name');
+            $middle_name = $this->input->post('middle_name');
+            $last_name = $this->input->post('last_name');
+            $college_id = $this->input->post('college_id');
+            $program_id = $this->input->post('program_id');
+            $year_level_id = $this->input->post('year_level_id');
+            $section_id = $this->input->post('section_id');
+            $email = $this->input->post('email');
+            $mobile = $this->input->post('mobile');
+            $dateCreated = date("Y-m-d");
+        
+            // Validation checks
+            if (empty($first_name)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'First name is required',
+                );
+            } else if (empty($last_name)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'Last name is required',
+                );
+            } else if (empty($email)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'Email is required',
+                );
+            } else if (empty($mobile)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'Mobile number is required',
+                );
+            }  else {
+                try {
+                    // Hash the password
+                    $teacher_id = $this->TeacherModel->generateTeacherID();
+                    $user_id = $this->UserModel->generateUserID();
+                    // $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+
+                    while ($this->TeacherModel->isTeacherIDExists($teacher_id)) {
+                        // Regenerate teacher id if it already exists
+                        $teacher_id = $this->TeacherModel->generateTeacherID();
+                    }
+
+                    // $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+
+                    while ($this->UserModel->isUserIDExists($user_id)) {
+                        // Regenerate teacher id if it already exists
+                        $user_id = $this->UserModel->generateUserID();
+                    }
+        
+                    // Payload array for new user data
+                    $payload = array(
+                        'teacher_id'            => $teacher_id,
+                        'user_id'               => $user_id,
+                        'first_name'            => $first_name,
+                        'middle_name'           => $middle_name,
+                        'last_name'             => $last_name,
+                        'college_id'            => $college_id,
+                        'program_id'            => $program_id,
+                        'email'                 => $email,
+                        'mobile'       => $mobile,
+                        'created_at' => date("Y-m-d"),
+                    );
+        
+                    // Call model function to add user
+                    $response = $this->TeacherModel->add($payload);
+                    array_push($transQuery, $response);
+
+
+                    // Add Student
+                    
+                    
+                     $payload_user = array(
+                        'user_id'               => $user_id,
+                        'user_type'             => 'teacher',
+                        'username'              => strtolower($first_name).'.'.strtolower($last_name),
+                        'password'              => strtolower($last_name),
+                        'created_at' => date("Y-m-d"),
+                    );
+        
+                    // Call model function to add user
+                    $response_user = $this->UserModel->add($payload_user);
+                    array_push($transQuery, $response_user);
+                    $result = array_filter($transQuery);
+                    $res = $this->mysqlTQ($result);
+        
+                    // Success response
+                    if ($res) {
+                        $return = array(
+                            '_isError' => false,
+                            'reason' => 'Successfully added new teacher',
+                            'data' => $payload
+                        );
+                    } else {
+                        $return = array(
+                            '_isError' => true,
+                            'reason' => 'Error adding teacher',
+                        );
+                    }
+        
+                } catch (Exception $e) {
+                    // Handle exception and return error response
+                    $return = array(
+                        '_isError' => true,
+                        'reason' => $e->getMessage(),
+                    );
+                }
+            }
+        
+            // Output the response
+            $this->response->output($return);
+        }
+        public function addStudent() {
+            $transQuery = array();
+        
+            // Retrieve form data using the 'name' attributes from the HTML form
+        
+            $first_name = $this->input->post('first_name');
+            $middle_name = $this->input->post('middle_name');
+            $last_name = $this->input->post('last_name');
+            $college_id = $this->input->post('college_id');
+            $program_id = $this->input->post('program_id');
+            $year_level_id = $this->input->post('year_level_id');
+            $section_id = $this->input->post('section_id');
+            $email = $this->input->post('email');
+            $mobile = $this->input->post('mobile');
+            $dateCreated = date("Y-m-d");
+        
+            // Validation checks
+            if (empty($first_name)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'First name is required',
+                );
+            } else if (empty($last_name)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'Last name is required',
+                );
+            } else if (empty($email)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'Email is required',
+                );
+            } else if (empty($mobile)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'Mobile number is required',
+                );
+            }  else {
+                try {
+                    // Hash the password
+                    $student_id = $this->StudentModel->generateStudentID();
+                    $user_id = $this->UserModel->generateUserID();
+                    // $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+
+                    while ($this->StudentModel->isStudentIDExists($student_id)) {
+                        // Regenerate student ID if it already exists
+                        $student_id = $this->StudentModel->generateStudentID();
+                    }
+
+                    // $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+
+                    while ($this->UserModel->isUserIDExists($user_id)) {
+                        // Regenerate student ID if it already exists
+                        $user_id = $this->UserModel->generateUserID();
+                    }
+        
+                    // Payload array for new user data
+                    $payload = array(
+                        'student_id'            => $student_id,
+                        'user_id'               => $user_id,
+                        'first_name'            => $first_name,
+                        'middle_name'           => $middle_name,
+                        'last_name'             => $last_name,
+                        'college_id'            => $college_id,
+                        'program_id'            => $program_id,
+                        'year_level_id'         => $year_level_id,
+                        'section_id'            => $section_id,
+                        'email'                 => $email,
+                        'mobile'       => $mobile,
+                        'created_at' => date("Y-m-d"),
+                    );
+        
+                    // Call model function to add user
+                    $response = $this->StudentModel->add($payload);
+                    array_push($transQuery, $response);
+
+
+                    // Add Student
+                    
+                    
+                    
+        
+                     $payload_user = array(
+                        'user_id'               => $user_id,
+                        'user_type'             => 'student',
+                        'username'              => strtolower($first_name).'.'.strtolower($last_name),
+                        'password'              => strtolower($last_name),
+                        'created_at' => date("Y-m-d"),
+                    );
+        
+                    // Call model function to add user
+                    $response_user = $this->UserModel->add($payload_user);
+                    array_push($transQuery, $response_user);
+                    $result = array_filter($transQuery);
+                    $res = $this->mysqlTQ($result);
+        
+                    // Success response
+                    if ($res) {
+                        $return = array(
+                            '_isError' => false,
+                            'reason' => 'Successfully added new student',
+                            'data' => $payload
+                        );
+                    } else {
+                        $return = array(
+                            '_isError' => true,
+                            'reason' => 'Error adding student',
+                        );
+                    }
+        
+                } catch (Exception $e) {
+                    // Handle exception and return error response
+                    $return = array(
+                        '_isError' => true,
+                        'reason' => $e->getMessage(),
+                    );
+                }
+            }
+        
+            // Output the response
+            $this->response->output($return);
+        }
         /* Logout user */
         public function logout(){
             $transQuery      = array();
-            // $headers = $this->input->request_headers();
-            // $token = $headers['Authorization'];
-            // if (strpos($token, 'Bearer ') === 0) {
-            //     $token = substr($token, 7);
-            // }
+            $headers = $this->input->request_headers();
+            $token = $headers['Authorization'];
+            if (strpos($token, 'Bearer ') === 0) {
+                $token = substr($token, 7);
+            }
             $return   = array();
-            $token = $this->input->post("token");
+           
             $payload = array(
                 'token' => $token,
             );

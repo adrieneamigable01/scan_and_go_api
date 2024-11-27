@@ -4,7 +4,7 @@
      * @version 0.1.0
     */ 
 
-    class College extends MY_Controller{
+    class College extends CI_Controller{
         /**
             * Class constructor.
             *

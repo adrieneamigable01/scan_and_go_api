@@ -4,7 +4,7 @@
      * @version 0.1.0
     */ 
 
-    class Section extends MY_Controller{
+    class Section extends CI_Controller{
         /**
             * Class constructor.
             *

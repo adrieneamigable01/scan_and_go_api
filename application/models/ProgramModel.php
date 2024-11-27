@@ -16,10 +16,17 @@
         return $this->db->set($payload)->get_compiled_update('program');
     }
    
-    public function get($payload){
+    public function get($payload,$payloadWhereIn){
         $this->db->select('*');
         $this->db->from('program');
         $this->db->where($payload);
+     
+        if(!empty($payloadWhereIn)){
+            foreach ($payloadWhereIn as $key => $value) {
+                $array_where_in = explode(',', $value);
+                $this->db->where_in($key,$array_where_in);
+            }
+        }
         $query = $this->db->get();
         return $query->result();
     }
