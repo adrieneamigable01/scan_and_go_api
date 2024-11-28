@@ -114,7 +114,6 @@
             $year_level_id = $this->input->post('year_level_id');
             $section_id = $this->input->post('section_id');
             $email = $this->input->post('email');
-            $mobile = $this->input->post('mobile');
             $dateCreated = date("Y-m-d");
         
             // Validation checks
@@ -133,12 +132,7 @@
                     '_isError' => true,
                     'reason' => 'Email is required',
                 );
-            } else if (empty($mobile)) {
-                $return = array(
-                    '_isError' => true,
-                    'reason' => 'Mobile number is required',
-                );
-            }  else {
+            } else {
                 try {
                     // Hash the password
                     $teacher_id = $this->TeacherModel->generateTeacherID();
@@ -167,7 +161,6 @@
                         'college_id'            => $college_id,
                         'program_id'            => $program_id,
                         'email'                 => $email,
-                        'mobile'       => $mobile,
                         'created_at' => date("Y-m-d"),
                     );
         
@@ -233,7 +226,6 @@
             $college_id = $this->input->post('college_id');
             $program_id = $this->input->post('program_id');
             $email = $this->input->post('email');
-            $mobile = $this->input->post('mobile');
             $teacher_image = $this->input->post('teacher_image');
             $dateCreated = date("Y-m-d");
         
@@ -259,11 +251,6 @@
                     '_isError' => true,
                     'reason' => 'Email is required',
                 );
-            } else if (empty($mobile)) {
-                $return = array(
-                    '_isError' => true,
-                    'reason' => 'Mobile number is required',
-                );
             }  else {
                 try {
                     // Hash the password
@@ -277,7 +264,6 @@
                         'college_id'            => $college_id,
                         'program_id'            => $program_id,
                         'email'                 => $email,
-                        'mobile'                => $mobile,
                         'teacher_image'         => $teacher_image,
                         'updated_at' => date("Y-m-d"),
                     );

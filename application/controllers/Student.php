@@ -128,7 +128,6 @@
             $year_level_id = $this->input->post('year_level_id');
             $section_id = $this->input->post('section_id');
             $email = $this->input->post('email');
-            $mobile = $this->input->post('mobile');
             $dateCreated = date("Y-m-d");
         
             // Validation checks
@@ -146,11 +145,6 @@
                 $return = array(
                     '_isError' => true,
                     'reason' => 'Email is required',
-                );
-            } else if (empty($mobile)) {
-                $return = array(
-                    '_isError' => true,
-                    'reason' => 'Mobile number is required',
                 );
             }  else {
                 try {
@@ -183,7 +177,6 @@
                         'year_level_id'         => $year_level_id,
                         'section_id'            => $section_id,
                         'email'                 => $email,
-                        'mobile'       => $mobile,
                         'created_at' => date("Y-m-d"),
                     );
         
@@ -251,7 +244,6 @@
             $year_level_id = $this->input->post('year_level_id');
             $section_id = $this->input->post('section_id');
             $email = $this->input->post('email');
-            $mobile = $this->input->post('mobile');
             $student_image = $this->input->post('student_image');
         
             // Validation checks
@@ -276,11 +268,6 @@
                     '_isError' => true,
                     'reason' => 'Email is required',
                 );
-            } else if (empty($mobile)) {
-                $return = array(
-                    '_isError' => true,
-                    'reason' => 'Mobile number is required',
-                );
             } else {
                 try {
                     // Hash the password
@@ -296,7 +283,6 @@
                         'year_level_id'         => $year_level_id,
                         'section_id'            => $section_id,
                         'email'                 => $email,
-                        'mobile'                => $mobile,
                         'student_image'         => $student_image,
                         // 'students.password' => $password,
                         'updated_at' => date("Y-m-d"),
