@@ -69,6 +69,7 @@
             }else{
                //set payload
                 $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+                // print_r($hashedPassword);return false;
                 $payload = array('username' => $username);
                 /** 
                     * Call the auth  model
@@ -182,7 +183,7 @@
             $section_id = $this->input->post('section_id');
             $email = $this->input->post('email');
             $password = $this->input->post('password');
-            $mobile = $this->input->post('mobile');
+            // $mobile = $this->input->post('mobile');
             $dateCreated = date("Y-m-d");
         
             // Validation checks
@@ -200,11 +201,6 @@
                 $return = array(
                     '_isError' => true,
                     'reason' => 'Email is required',
-                );
-            } else if (empty($mobile)) {
-                $return = array(
-                    '_isError' => true,
-                    'reason' => 'Mobile number is required',
                 );
             } else if (empty($password)) {
                 $return = array(
@@ -240,7 +236,6 @@
                         'college_id'            => $college_id,
                         'program_id'            => $program_id,
                         'email'                 => $email,
-                        'mobile'       => $mobile,
                         'created_at' => date("Y-m-d"),
                     );
         
@@ -305,7 +300,6 @@
             $year_level_id = $this->input->post('year_level_id');
             $section_id = $this->input->post('section_id');
             $email = $this->input->post('email');
-            $mobile = $this->input->post('mobile');
             $password = $this->input->post('password');
             $dateCreated = date("Y-m-d");
         
@@ -325,12 +319,7 @@
                     '_isError' => true,
                     'reason' => 'Email is required',
                 );
-            } else if (empty($mobile)) {
-                $return = array(
-                    '_isError' => true,
-                    'reason' => 'Mobile number is required',
-                );
-            } else if (empty($password)) {
+            }  else if (empty($password)) {
                 $return = array(
                     '_isError' => true,
                     'reason' => 'Password is required',
@@ -366,7 +355,6 @@
                         'year_level_id'         => $year_level_id,
                         'section_id'            => $section_id,
                         'email'                 => $email,
-                        'mobile'       => $mobile,
                         'created_at' => date("Y-m-d"),
                     );
         
