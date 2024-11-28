@@ -68,7 +68,8 @@
                 );
             }else{
                //set payload
-                $payload = array('username' => $username, 'password' => $password);
+                $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+                $payload = array('username' => $username);
                 /** 
                     * Call the auth  model
                     * then call the authenticate method
@@ -79,67 +80,78 @@
            
                 try{
                     if(count($authenticate) > 0){
+
+                        if (password_verify($password, $authenticate[0]->password)) {
+                            $data = array(
+                                'user_id'        => $authenticate[0]->user_id,
+                                'full_name'      => $authenticate[0]->last_name.', '.$authenticate[0]->first_name,
+                                'first_name'     => $authenticate[0]->first_name,
+                                'last_name'      => $authenticate[0]->last_name,
+                                'username'         => $authenticate[0]->username,
+                                'user_type'      => $authenticate[0]->user_type,
+                                'created_at'   => $authenticate[0]->created_at,
+                                'updated_at'   => $authenticate[0]->updated_at,
+                            );
+    
+                            
+    
+                            $jwtpayload = array(
+                                "iss" => "scanandgo",
+                                "aud" => "scanandgo-api",
+                                "iat" => time(),
+                                "exp" => time() + (60 * 60),  // Token expires in 1 hour
+                                "data" => $data
+                            );
+    
+                            $jwt = generate_jwt($jwtpayload, $this->config->item('jwt_key'));
+    
+                            $return = array(
+                                '_isError'      => false,
+                                // 'code'       =>http_response_code(),
+                                'reason'        =>'Login successfuly',
+                                'data'  => $data,
+                                'token' => $jwt,
+                            );
+    
+                            if($authenticate[0]->user_type == "student"){
+                                $student_id = $this->input->get("student_id");
+                                $student_payload = array(
+                                    'students.is_active' => 1,
+                                    'students.user_id' => $authenticate[0]->user_id
+                                );
+                
+                                $student_data = $this->StudentModel->get($student_payload);
+    
+                                $return['student'] = $student_data;
+                            }
+    
+                            if($authenticate[0]->user_type == "teacher"){
+                                $teacher_payload = array(
+                                    'teachers.is_active' => 1,
+                                    'teachers.user_id' => $authenticate[0]->user_id
+                                );
+                
+                                $teacher_data = $this->TeacherModel->get($teacher_payload);
+    
+                                $return['teacher'] = $teacher_data;
+                            }
+                        } else {
+                            $return = array(
+                                '_isError' => true,
+                                'data'=> $payload,
+                                // 'code'     =>http_response_code(),
+                                'reason'   =>'Invalid login credentials',
+                            );
+                        }
+
                        
-
-                        $data = array(
-                            'user_id'        => $authenticate[0]->user_id,
-                            'full_name'      => $authenticate[0]->last_name.', '.$authenticate[0]->first_name,
-                            'first_name'     => $authenticate[0]->first_name,
-                            'last_name'      => $authenticate[0]->last_name,
-                            'username'         => $authenticate[0]->username,
-                            'user_type'      => $authenticate[0]->user_type,
-                            'created_at'   => $authenticate[0]->created_at,
-                            'updated_at'   => $authenticate[0]->updated_at,
-                        );
-
-                        
-
-                        $jwtpayload = array(
-                            "iss" => "scanandgo",
-                            "aud" => "scanandgo-api",
-                            "iat" => time(),
-                            "exp" => time() + (60 * 60),  // Token expires in 1 hour
-                            "data" => $data
-                        );
-
-                        $jwt = generate_jwt($jwtpayload, $this->config->item('jwt_key'));
-
-                        $return = array(
-                            '_isError'      => false,
-                            // 'code'       =>http_response_code(),
-                            'reason'        =>'Login successfuly',
-                            'data'  => $data,
-                            'token' => $jwt,
-                        );
-
-                        if($authenticate[0]->user_type == "student"){
-                            $student_id = $this->input->get("student_id");
-                            $student_payload = array(
-                                'students.is_active' => 1,
-                                'students.user_id' => $authenticate[0]->user_id
-                            );
-            
-                            $student_data = $this->StudentModel->get($student_payload);
-
-                            $return['student'] = $student_data;
-                        }
-
-                        if($authenticate[0]->user_type == "teacher"){
-                            $teacher_payload = array(
-                                'teachers.is_active' => 1,
-                                'teachers.user_id' => $authenticate[0]->user_id
-                            );
-            
-                            $teacher_data = $this->TeacherModel->get($teacher_payload);
-
-                            $return['teacher'] = $teacher_data;
-                        }
 
                     }else{
                         $return = array(
                             '_isError' => true,
+                            'data'=> $payload,
                             // 'code'     =>http_response_code(),
-                            'reason'   =>'User not found',
+                            'reason'   =>'Invalid login credentials',
                         );
                     }
                 }catch (Exception $e) {
@@ -169,6 +181,7 @@
             $year_level_id = $this->input->post('year_level_id');
             $section_id = $this->input->post('section_id');
             $email = $this->input->post('email');
+            $password = $this->input->post('password');
             $mobile = $this->input->post('mobile');
             $dateCreated = date("Y-m-d");
         
@@ -193,12 +206,17 @@
                     '_isError' => true,
                     'reason' => 'Mobile number is required',
                 );
+            } else if (empty($password)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'Password is required',
+                );
             }  else {
                 try {
                     // Hash the password
                     $teacher_id = $this->TeacherModel->generateTeacherID();
                     $user_id = $this->UserModel->generateUserID();
-                    // $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+                    $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
 
                     while ($this->TeacherModel->isTeacherIDExists($teacher_id)) {
                         // Regenerate teacher id if it already exists
@@ -237,8 +255,8 @@
                      $payload_user = array(
                         'user_id'               => $user_id,
                         'user_type'             => 'teacher',
-                        'username'              => strtolower($first_name).'.'.strtolower($last_name),
-                        'password'              => strtolower($last_name),
+                        'username'              => $email,
+                        'password'              => $hashedPassword,
                         'created_at' => date("Y-m-d"),
                     );
         
@@ -288,6 +306,7 @@
             $section_id = $this->input->post('section_id');
             $email = $this->input->post('email');
             $mobile = $this->input->post('mobile');
+            $password = $this->input->post('password');
             $dateCreated = date("Y-m-d");
         
             // Validation checks
@@ -311,7 +330,12 @@
                     '_isError' => true,
                     'reason' => 'Mobile number is required',
                 );
-            }  else {
+            } else if (empty($password)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'Password is required',
+                );
+            } else {
                 try {
                     // Hash the password
                     $student_id = $this->StudentModel->generateStudentID();
@@ -323,7 +347,7 @@
                         $student_id = $this->StudentModel->generateStudentID();
                     }
 
-                    // $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+                    $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
 
                     while ($this->UserModel->isUserIDExists($user_id)) {
                         // Regenerate student ID if it already exists
@@ -359,8 +383,8 @@
                      $payload_user = array(
                         'user_id'               => $user_id,
                         'user_type'             => 'student',
-                        'username'              => strtolower($first_name).'.'.strtolower($last_name),
-                        'password'              => strtolower($last_name),
+                        'username'              => $email,
+                        'password'              => $hashedPassword,
                         'created_at' => date("Y-m-d"),
                     );
         

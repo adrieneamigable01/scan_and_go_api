@@ -18,6 +18,7 @@
                 users.user_id, 
                 users.user_type, 
                 users.username, 
+                users.password,
                 users.created_at, 
                 users.updated_at, 
                 CASE 
@@ -42,10 +43,10 @@
             LEFT JOIN students ON students.user_id = users.user_id AND users.user_type = 'student'
             LEFT JOIN admins ON admins.user_id = users.user_id AND users.user_type = 'admin'
             LEFT JOIN teachers ON teachers.user_id = users.user_id AND users.user_type = 'teacher'
-            WHERE username = ? AND password = ?";
+            WHERE username = ?";
 
         // Execute the query with the payload's values (email and password)
-        $query = $this->db->query($sql, array($payload['username'], $payload['password']));
+        $query = $this->db->query($sql, array($payload['username']));
         // Return the result as an array
         return $query->result();
     }
