@@ -79,7 +79,7 @@
            
                 try{
                     if(count($authenticate) > 0){
-     
+                       
 
                         $data = array(
                             'user_id'        => $authenticate[0]->user_id,
@@ -91,6 +91,8 @@
                             'created_at'   => $authenticate[0]->created_at,
                             'updated_at'   => $authenticate[0]->updated_at,
                         );
+
+                        
 
                         $jwtpayload = array(
                             "iss" => "scanandgo",
@@ -109,6 +111,30 @@
                             'data'  => $data,
                             'token' => $jwt,
                         );
+
+                        if($authenticate[0]->user_type == "student"){
+                            $student_id = $this->input->get("student_id");
+                            $student_payload = array(
+                                'students.is_active' => 1,
+                                'students.user_id' => $authenticate[0]->user_id
+                            );
+            
+                            $student_data = $this->StudentModel->get($student_payload);
+
+                            $return['student'] = $student_data;
+                        }
+
+                        if($authenticate[0]->user_type == "teacher"){
+                            $teacher_payload = array(
+                                'teachers.is_active' => 1,
+                                'teachers.user_id' => $authenticate[0]->user_id
+                            );
+            
+                            $teacher_data = $this->TeacherModel->get($teacher_payload);
+
+                            $return['teacher'] = $teacher_data;
+                        }
+
                     }else{
                         $return = array(
                             '_isError' => true,
