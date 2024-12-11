@@ -54,16 +54,28 @@
              * @var string session data $accessKey
             */
             try{
-               
+                $program_id = $this->input->get("program_id");
+                $year_level_ids = $this->input->get("year_level_ids");
+                $program_ids = $this->input->get("program_ids");
                 /** 
                     * Call the supploer model
                     * then call the getUser method
                     * @param array $payload.
                 */
                 $payload = array(
-                    'section.is_active' => 1
+                    'section.is_active' => 1,
                 );
-                $request = $this->SectionModel->get($payload);
+
+
+
+                $whereinset = array();
+                
+                if(!empty($program_id)){
+                    $payload['section.program_id'] = $program_id;
+                }
+
+  
+                $request = $this->SectionModel->get($payload,$year_level_ids,$program_ids);
                 $return = array(
                     '_isError'      => false,
                     'message'        =>'Success',

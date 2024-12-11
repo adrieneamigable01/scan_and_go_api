@@ -62,10 +62,20 @@
                     * @param array $payload.
                 */
                 $teacher_id = $this->input->get("teacher_id");
+                
                 $payload = array(
                     'teachers.is_active' => 1
                 );
 
+                $college_id = $this->input->get("college_id");
+                $program_id = $this->input->get("program_id");
+                
+                if(!empty($college_id)){
+                    $payload['teachers.college_id'] = $college_id;
+                }
+                if(!empty($program_id)){
+                    $payload['teachers.program_id'] = $program_id;
+                }
                 if(!empty($teacher_id)){
                     $payload['teacher_id'] = $teacher_id;
                 }
@@ -169,7 +179,7 @@
                     array_push($transQuery, $response);
 
 
-                    // Add Student
+                    // Add teacher
                     
                     
                      $payload_user = array(
@@ -220,6 +230,7 @@
             // Retrieve form data using the 'name' attributes from the HTML form
         
             $teacher_id = $this->input->post('teacher_id');
+            $user_id = $this->input->post('user_id');
             $first_name = $this->input->post('first_name');
             $middle_name = $this->input->post('middle_name');
             $last_name = $this->input->post('last_name');
@@ -234,6 +245,18 @@
                 $return = array(
                     '_isError' => true,
                     'reason' => 'Teacher ID is required',
+                );
+            }
+            else if (empty($user_id)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'User id is required',
+                );
+            }
+            else if ($this->TeacherModel->isTeacherIDExists($teacher_id,$user_id)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'Teacher ID Already Exist',
                 );
             }
             else if (empty($first_name)) {
@@ -258,6 +281,7 @@
         
                     // Payload array for new user data
                     $payload = array(
+                        'teacher_id'            => $teacher_id,
                         'first_name'            => $first_name,
                         'middle_name'           => $middle_name,
                         'last_name'             => $last_name,
@@ -268,7 +292,7 @@
                         'updated_at' => date("Y-m-d"),
                     );
                     $where = array(
-                        'teacher_id' => $teacher_id,
+                        'user_id' => $user_id,
                     );
                     // Call model function to add user
                     $response = $this->TeacherModel->update($payload,$where);
@@ -303,12 +327,89 @@
             // Output the response
             $this->response->output($return);
         }
-
+        public function verify_face() {
+            $return = array();
+        
+            if ($this->input->server('REQUEST_METHOD') === 'POST') {
+                // Get the incoming descriptor from POST data
+                $teacher_id = $this->input->post('teacher_id');
+                $incomingDescriptor = json_decode($this->input->post('descriptor'), true);
+        
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    $return = array(
+                        'isError' => true,
+                        'message' => 'Invalid JSON format for incoming descriptor.',
+                    );
+                    return $this->response->output($return);
+                }
+        
+                if (empty($incomingDescriptor)) {
+                    $return = array(
+                        'isError' => true,
+                        'message' => 'No descriptor data received.',
+                    );
+                    return $this->response->output($return);
+                }
+        
+                // Prepare the SQL to fetch all saved face descriptors and associated user info
+                $payload = array(
+                    'teachers.teacher_id' => $teacher_id,
+                );
+                $teacher = $this->TeacherModel->get($payload);
+        
+                // Function to calculate the Euclidean distance between two descriptors
+                function euclideanDistance($a, $b) {
+                    return sqrt(array_sum(array_map(function($x, $y) { return pow($x - $y, 2); }, $a, $b)));
+                }
+              
+                if (empty($teacher) || empty($teacher[0]->face_descriptor)) {
+                    $return = array(
+                        'isError' => true,
+                        'message' => 'Teacher or face descriptor not found.',
+                    );
+                    return $this->response->output($return);
+                }
+        
+                // Decode the saved descriptor from the database
+                $savedDescriptor = json_decode($teacher[0]->face_descriptor, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    $return = array(
+                        'isError' => true,
+                        'message' => 'Invalid JSON format for saved descriptor.',
+                    );
+                    return $this->response->output($return);
+                }
+        
+                // Compare the incoming descriptor with the saved descriptor using Euclidean distance
+                $threshold = 0.6; // This can be passed as a parameter for dynamic adjustment
+                $distance = euclideanDistance($savedDescriptor, $incomingDescriptor);
+        
+                if ($distance < $threshold) {
+                    $return = array(
+                        'isError' => false,
+                        'message' => 'Face recognized!',
+                    );
+                } else {
+                    $return = array(
+                        'isError' => true,
+                        'message' => 'Face not recognized.',
+                    );
+                }
+            } else {
+                $return = array(
+                    'isError' => true,
+                    'message' => 'Invalid request.',
+                );
+            }
+        
+            $this->response->output($return);
+        }
         public function update_face() {
             $transQuery = array();
         
             // Retrieve form data using the 'name' attributes from the HTML form
             $teacher_id = $this->input->post('teacher_id');
+            $teacher_image = $this->input->post('teacher_image');
             $descriptor = $this->input->post('descriptor');
         
             // Validation checks
@@ -316,6 +417,12 @@
                 $return = array(
                     '_isError' => true,
                     'reason' => 'teacher id is required',
+                );
+            }
+            else if (empty($teacher_image)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'teacher image is required',
                 );
             }
             else if (empty($descriptor)) {
@@ -331,6 +438,7 @@
                     // Payload array for new user data
                     $payload = array(
                         'face_descriptor'            => $descriptor,
+                        'teacher_image'            => $teacher_image,
                         'updated_at' => date("Y-m-d"),
                     );
                     $where = array(

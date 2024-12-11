@@ -77,7 +77,7 @@
                     * @param array $payload.
                 */
                 $authenticate = $this->AuthModel->authenticate($payload);
-                
+         
            
                 try{
                     if(count($authenticate) > 0){
@@ -93,7 +93,7 @@
                                 'created_at'   => $authenticate[0]->created_at,
                                 'updated_at'   => $authenticate[0]->updated_at,
                             );
-    
+                       
                             
     
                             $jwtpayload = array(
@@ -173,7 +173,7 @@
             $transQuery = array();
         
             // Retrieve form data using the 'name' attributes from the HTML form
-        
+            $teacher_id = $this->input->post('teacher_id');
             $first_name = $this->input->post('first_name');
             $middle_name = $this->input->post('middle_name');
             $last_name = $this->input->post('last_name');
@@ -187,7 +187,20 @@
             $dateCreated = date("Y-m-d");
         
             // Validation checks
-            if (empty($first_name)) {
+
+            if (empty($teacher_id)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'Teacher id is required',
+                );
+            }
+            else if($this->TeacherModel->isTeacherIDExists($teacher_id)){
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'Teacher ID Already Exist',
+                );
+            }
+            else if (empty($first_name)) {
                 $return = array(
                     '_isError' => true,
                     'reason' => 'First name is required',
@@ -210,14 +223,14 @@
             }  else {
                 try {
                     // Hash the password
-                    $teacher_id = $this->TeacherModel->generateTeacherID();
+                    // $teacher_id = $this->TeacherModel->generateTeacherID();
                     $user_id = $this->UserModel->generateUserID();
                     $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
 
-                    while ($this->TeacherModel->isTeacherIDExists($teacher_id)) {
-                        // Regenerate teacher id if it already exists
-                        $teacher_id = $this->TeacherModel->generateTeacherID();
-                    }
+                    // while ($this->TeacherModel->isTeacherIDExists($teacher_id)) {
+                    //     // Regenerate teacher id if it already exists
+                    //     $teacher_id = $this->TeacherModel->generateTeacherID();
+                    // }
 
                     // $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
 
@@ -291,7 +304,7 @@
             $transQuery = array();
         
             // Retrieve form data using the 'name' attributes from the HTML form
-        
+            $student_id = $this->input->post('student_id');
             $first_name = $this->input->post('first_name');
             $middle_name = $this->input->post('middle_name');
             $last_name = $this->input->post('last_name');
@@ -304,7 +317,19 @@
             $dateCreated = date("Y-m-d");
         
             // Validation checks
-            if (empty($first_name)) {
+            if (empty($student_id)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'Student id is required',
+                );
+            }
+            else if($this->StudentModel->isStudentIDExists($student_id)){
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'Student ID Already Exist',
+                );
+            }
+            else if (empty($first_name)) {
                 $return = array(
                     '_isError' => true,
                     'reason' => 'First name is required',
@@ -327,14 +352,7 @@
             } else {
                 try {
                     // Hash the password
-                    $student_id = $this->StudentModel->generateStudentID();
                     $user_id = $this->UserModel->generateUserID();
-                    // $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
-
-                    while ($this->StudentModel->isStudentIDExists($student_id)) {
-                        // Regenerate student ID if it already exists
-                        $student_id = $this->StudentModel->generateStudentID();
-                    }
 
                     $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
 

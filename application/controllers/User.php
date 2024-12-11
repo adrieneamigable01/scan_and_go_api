@@ -22,6 +22,93 @@
             );
             $this->response->output($return); //return the json encoded data
         }
+        public function change_password(){
+            $transQuery = array();
+            $current_password = $this->input->post('current_password');
+            $new_password = $this->input->post('new_password');
+            $confirm_password = $this->input->post('confirm_password');
+            $user_id = $this->input->post('user_id');
+            if (empty($current_password)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'Current password is required',
+                );
+            }
+            else if (empty($new_password)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'New password is required',
+                );
+            }else  if (empty($confirm_password)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'Confirm password is required',
+                );
+            }else  if (empty($user_id)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'User ID is required',
+                );
+            }else  if ($new_password != $confirm_password) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'Password not match',
+                );
+            }else{
+               
+                // print_r($hashedPassword);return false;
+                $payload = array('user_id' => $user_id);
+                $authenticate = $this->UserModel->authenticate($payload);
+                if(count($authenticate) > 0){
+
+                    if (!password_verify($current_password, $authenticate[0]->password)) {
+                        $return = array(
+                            '_isError' => true,
+                            'data'=> $payload,
+                            // 'code'     =>http_response_code(),
+                            'reason'   =>'You enter an invalid old Password',
+                        );
+                    }else if (password_verify($new_password, $authenticate[0]->password)) {
+                        $return = array(
+                            '_isError' => true,
+                            'data'=> $payload,
+                            // 'code'     =>http_response_code(),
+                            'reason'   => 'Please enter a new password not your current password',
+                        );
+                    }  
+                    else {
+                        $hashedPassword = password_hash($new_password, PASSWORD_BCRYPT);
+                        $user_id = $this->input->post('user_id');
+                        $payload = array(
+                            'password' => $hashedPassword,
+                        );
+                        $where = array(
+                            'user_id' => $user_id
+                        );
+                        $response = $this->UserModel->changePassword($payload,$where);
+                        array_push($transQuery, $response);
+                        $result = array_filter($transQuery);
+                        $res = $this->mysqlTQ($result);
+            
+                        // Success response
+                        if ($res) {
+                            $return = array(
+                                '_isError' => false,
+                                'reason' => 'Successfully updated student',
+                                'data' => $payload
+                            );
+                        } else {
+                            $return = array(
+                                '_isError' => true,
+                                'reason' => 'Error updating student',
+                            );
+                        }
+                    }
+
+                }
+            }
+            $this->response->output($return); //return the json encoded data
+        }
         public function mysqlTQ($arrQuery){
             $arrayIds = array();
             if (!empty($arrQuery)) {
