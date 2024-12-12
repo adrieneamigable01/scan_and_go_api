@@ -1246,13 +1246,12 @@
                             }
                         }
                     }
-                    $event_payload = array(
-                        'event_id' => $event_id,
-                    );
+
+                
                     $return = array(
                         '_isError' => false,
                         'message' => 'Success',
-                        'event' =>  $this->EventModel->get_single($event_payload),
+                        'event' =>  $event,
                         'attendance' => array(
                             'students' => $students_attendance_details,
                             'teachers' => $teachers_attendance_details,
