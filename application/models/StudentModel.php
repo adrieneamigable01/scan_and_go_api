@@ -89,6 +89,7 @@
         $this->db->join('year_level', 'year_level.year_level_id = students.year_level_id', 'left'); 
         $this->db->join('section', 'section.section_id = students.section_id', 'left'); 
         // $this->db->where_in($payload);
+        $this->db->where('students.is_active',1);
         $this->db->where_in('students.section_id',$payload);
         $query = $this->db->get();
         return $query->result();

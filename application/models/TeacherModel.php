@@ -77,6 +77,7 @@
         $this->db->join('college', 'college.college_id = teachers.college_id', 'left'); 
         $this->db->join('program', 'program.program_id = teachers.program_id', 'left'); 
         // $this->db->where($payload);
+        $this->db->where('teachers.is_active',1);
         $this->db->where_in('teachers.program_id',$payload);
         $query = $this->db->get();
         return $query->result();
