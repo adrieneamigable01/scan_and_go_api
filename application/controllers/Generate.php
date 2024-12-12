@@ -95,13 +95,15 @@
             }else{
                 // Step 1: Retrieve all students
                 $students = $this->StudentModel->get(array(
-                    'students.section_id' => $section_id
+                    'students.section_id' => $section_id,
+                    'students.is_active' => 1,
                 ));
                 $student_ids = array_column($students, 'student_id');  // Extract student IDs
         
                 // Step 2: Retrieve all teachers
                 $teachers = $this->TeacherModel->get(array(
-                    'teachers.program_id' => $program_id
+                    'teachers.program_id' => $program_id,
+                    'teachers.is_active' => 1,
                 ));
                 $teacher_ids = array_column($teachers, 'teacher_id');  // Extract teacher IDs
         
