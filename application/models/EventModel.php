@@ -153,9 +153,11 @@
             GROUP_CONCAT(DISTINCT year_level.year_level ORDER BY year_level.year_level) AS year_level_names,
             GROUP_CONCAT(DISTINCT section.section ORDER BY section.section) AS section_names
         ');
-
+        
         $this->db->from('events');
-
+        if(!isset($payload['event_id'])){
+            $this->db->where($payload);
+        }
         // Fix for college_ids stored as JSON: remove the square brackets and handle as a CSV
         $this->db->join('college', 'FIND_IN_SET(college.college_id, REPLACE(REPLACE(events.college_ids, "[", ""), "]", "")) > 0', 'left');
         $this->db->join('program', 'FIND_IN_SET(program.program_id, REPLACE(REPLACE(events.program_ids, "[", ""), "]", "")) > 0', 'left');
