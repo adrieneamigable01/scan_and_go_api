@@ -1077,6 +1077,222 @@
                     ),
                 );
             } else {
+
+                $event_payload = array(
+                    'event_id' => $event_id,
+                );
+                $event = $this->EventModel->get_single($event_payload);
+        
+                if($event->is_ended == 0){
+                    // Step 1: Retrieve event participants to determine sections and programs
+                    $event_participants = $this->EventModel->get_event_participants($event_id);
+            
+                    // print_r( $event_participants );exit;
+                    $all_section_ids = [];
+                    $all_program_ids = [];
+                
+                    // If section_id or program_id is not provided, get all sections and programs from event participants
+                    if (empty($section_id) && empty($program_id)) {
+                    
+                    
+
+                        foreach ($event_participants as $participant) {
+                            // Split the comma-separated program_id and section_id into arrays
+                            $program_ids = explode(',', $participant->program_id);
+                            $section_ids = explode(',', $participant->section_id);
+                        
+                            // Merge the arrays and remove duplicates
+                            $all_section_ids = array_merge($all_section_ids, $section_ids);
+                            $all_program_ids = array_merge($all_program_ids, $program_ids);
+                        }
+                    
+                        $all_section_ids = array_unique($all_section_ids);
+                        $all_program_ids = array_unique($all_program_ids);
+                    
+                        // Optional: Re-index the arrays if needed
+                        $all_section_ids = array_values($all_section_ids);
+                        $all_program_ids = array_values($all_program_ids);
+                    }else{
+                        $all_section_ids = array_unique([$section_id]);
+                        $all_program_ids = array_unique([$program_id]);
+
+                        // Optional: Re-index the arrays if needed
+                        $all_section_ids = array_values($all_section_ids);
+                        $all_program_ids = array_values($all_program_ids);  
+                    }
+
+                
+            
+
+            
+                    // Step 2: Retrieve all students and teachers based on section_ids and program_ids
+                    $students = $this->StudentModel->get_student_event($all_section_ids);
+                    $student_ids = array_column($students, 'student_id');  // Extract student IDs
+            
+                    // Step 3: Retrieve all teachers based on program_ids
+                    $teachers = $this->TeacherModel->get_teacher_event($all_program_ids);
+                    $teacher_ids = array_column($teachers, 'teacher_id');  // Extract teacher IDs
+            
+                    // Step 4: Retrieve the event date
+                    $event = $this->EventModel->get_event_date($event_id);
+                    $event_date = $event->date;  // Assuming the event date is in the format 'Y-m-d'
+            
+                    // Step 5: Retrieve attendance records for students and teachers for the given event
+                    $attendance = $this->EventModel->get_multiple_attendance($student_ids, $teacher_ids, $event_id);
+            
+                    // Step 6: Prepare the result to return
+                    $students_attendance_details = [];
+                    $teachers_attendance_details = [];
+                    $current_date = date('Y-m-d');  // Get the current date
+            
+                    // Check attendance for each student
+                    foreach ($students as $student) {
+                        $attendance_record = $this->EventModel->get_attendance($student->student_id, null, $event_id);
+            
+                        if ($event_date > $current_date) {
+                            // Event is in the future, set attendance status as null
+                            $students_attendance_details[] = [
+                                'id' => $student->student_id,
+                                'name' => $student->first_name . ' ' . $student->last_name,
+                                'college' => $student->college,
+                                'college_short_name' => $student->short_name,
+                                'program' => $student->program,
+                                'program_short_name' => $student->program_short_name,
+                                'year_level' => $student->year_level,
+                                'section' => $student->section,
+                                'status' => null,  // No attendance status for future events
+                                'time_in' => null,
+                                'time_out' => null
+                            ];
+                        } else {
+                            // Event is today or in the past
+                            if ($attendance_record) {
+                                // Attendance exists, check for lateness
+                                $status = $this->check_lateness($attendance_record->time_in, $event_id);
+                                $students_attendance_details[] = [
+                                    'id' => $student->student_id,
+                                    'name' => $student->first_name . ' ' . $student->last_name,
+                                    'college' => $student->college,
+                                    'college_short_name' => $student->short_name,
+                                    'program' => $student->program,
+                                    'program_short_name' => $student->program_short_name,
+                                    'year_level' => $student->year_level,
+                                    'section' => $student->section,
+                                    'status' => $status,  // "Late" or "On Time"
+                                    'time_in' => $attendance_record->time_in,
+                                    'time_out' => $attendance_record->time_out
+                                ];
+                            } else {
+                                // No attendance, mark as Absent
+                                $students_attendance_details[] = [
+                                    'id' => $student->student_id,
+                                    'name' => $student->first_name . ' ' . $student->last_name,
+                                    'college' => $student->college,
+                                    'college_short_name' => $student->short_name,
+                                    'program' => $student->program,
+                                    'program_short_name' => $student->program_short_name,
+                                    'year_level' => $student->year_level,
+                                    'section' => $student->section,
+                                    'status' => 'Absent',  // Student has not attended
+                                    'time_in' => null,
+                                    'time_out' => null
+                                ];
+                            }
+                        }
+                    }
+            
+                    // Check attendance for each teacher
+                    foreach ($teachers as $teacher) {
+                        $attendance_record = $this->EventModel->get_attendance(null, $teacher->teacher_id, $event_id);
+            
+                        if ($event_date > $current_date) {
+                            // Event is in the future, set attendance status as null
+                            $teachers_attendance_details[] = [
+                                'id' => $teacher->teacher_id,
+                                'name' => $teacher->first_name . ' ' . $teacher->last_name,
+                                'status' => null,  // No attendance status for future events
+                                'time_in' => null,
+                                'time_out' => null
+                            ];
+                        } else {
+                            // Event is today or in the past
+                            if ($attendance_record) {
+                                // Attendance exists, check for lateness
+                                $status = $this->check_lateness($attendance_record->time_in, $event_id);
+                                $teachers_attendance_details[] = [
+                                    'id' => $teacher->teacher_id,
+                                    'name' => $teacher->first_name . ' ' . $teacher->last_name,
+                                    'college' => $teacher->college,
+                                    'college_short_name' => $teacher->short_name,
+                                    'program' => $teacher->program,
+                                    'program_short_name' => $teacher->program_short_name,
+                                    'status' => $status,  // "Late" or "On Time"
+                                    'time_in' => $attendance_record->time_in,
+                                    'time_out' => $attendance_record->time_out
+                                ];
+                            } else {
+                                // No attendance, mark as Absent
+                                $teachers_attendance_details[] = [
+                                    'id' => $teacher->teacher_id,
+                                    'name' => $teacher->first_name . ' ' . $teacher->last_name,
+                                    'college' => $teacher->college,
+                                    'college_short_name' => $teacher->short_name,
+                                    'program' => $teacher->program,
+                                    'program_short_name' => $teacher->program_short_name,
+                                    'status' => 'Absent',  // Teacher has not attended
+                                    'time_in' => null,
+                                    'time_out' => null
+                                ];
+                            }
+                        }
+                    }
+                    $event_payload = array(
+                        'event_id' => $event_id,
+                    );
+                    $return = array(
+                        '_isError' => false,
+                        'message' => 'Success',
+                        'event' =>  $this->EventModel->get_single($event_payload),
+                        'attendance' => array(
+                            'students' => $students_attendance_details,
+                            'teachers' => $teachers_attendance_details,
+                        ),
+                    );
+                }else{
+                    $event = $this->EventModel->get_event_record($event_id);
+                 
+                    $return = array(
+                        '_isError' => false,
+                        'message' => 'Success',
+                        'event' =>  $this->EventModel->get_single($event_payload),
+                        'attendance' => array(
+                            'students'=>json_decode($event->records)->attendance->students,
+                            'teachers'=>json_decode($event->records)->attendance->teachers,
+                        ),
+                    );
+                }
+                
+                
+            }
+        
+            $this->response->output($return);
+        }
+
+        public function end_event_attendance() {
+            $event_id = $this->input->post("event_id");
+            $section_id = $this->input->post("section_id");
+            $program_id = $this->input->post("program_id");
+        
+            if (empty($event_id)) {
+                $return = array(
+                    '_isError' => true,
+                    'message' => 'Event id is required',
+                    'attendance' => array(
+                        'students' => [],
+                        'teachers' => [],
+                    ),
+                );
+            } else {
                 // Step 1: Retrieve event participants to determine sections and programs
                 $event_participants = $this->EventModel->get_event_participants($event_id);
           
@@ -1243,18 +1459,55 @@
                 $event_payload = array(
                     'event_id' => $event_id,
                 );
-                $return = array(
-                    '_isError' => false,
-                    'message' => 'Success',
-                    'event' =>  $this->EventModel->get_single($event_payload),
+                $data = array(
                     'attendance' => array(
                         'students' => $students_attendance_details,
                         'teachers' => $teachers_attendance_details,
                     ),
                 );
             }
-        
-            $this->response->output($return);
+          
+            $transQuery = array();
+            
+            $array_save = array(
+                'event_id' => $event_id,
+                'records' =>  json_encode($data),               
+            );
+            
+            $event_query = $this->EventModel->add_record($array_save);
+
+            array_push($transQuery, $event_query);
+
+            $where = array(
+                'event_id' => $event_id,
+            );
+            $array_event_update = array(
+                'is_ended' => 1,               
+            );
+            
+            $event_update_query = $this->EventModel->update($array_event_update,$where);
+            array_push($transQuery, $event_update_query);
+
+            $result = array_filter($transQuery);
+            $res = $this->mysqlTQ($result);
+
+            // Success response
+            if ($res) { 
+                $return = array(
+                    'isError' => false,
+                    'data' => $saved,
+                    'message' => "Successfuly edded event",
+                );
+                $this->response->output($return);
+                return;
+            }else{
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'Error ending the event',
+                );
+                $this->response->output($return);
+                return;
+            }
         }
         
     
@@ -1444,7 +1697,7 @@
     
         // Define a reasonable threshold for face match (adjustable)
         $threshold = 0.6;
-
+        $participants = 0;
         // Loop through all saved descriptors and compare with the incoming one
         foreach ($savedData as $saved) {
            
@@ -1452,6 +1705,7 @@
             // If a match is found (distance below threshold), return the corresponding user data
             if ($user_type == "student") {
                 if($saved['id'] == $student_id){
+                    $participants = 1;
                     if($attendance_type == "time_in" && $saved['time_in'] != null){
                         $return = array(
                             'isError' => true,
@@ -1535,6 +1789,7 @@
                 }
             }else if ($user_type == "teacher") {
                 if($saved['id'] == $teacher_id){
+                    $participants = 1;
                     if($attendance_type == "time_in" && $saved['time_in'] != null){
                         $return = array(
                             'isError' => true,
@@ -1617,6 +1872,15 @@
                     }
                 }
             }
+        }
+
+        if($participants = 0){
+            $return = array(
+                '_isError' => true,
+                'reason' => 'This student is not part of the event',
+            );
+            $this->response->output($return);
+            return;
         }
         
 
