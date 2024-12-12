@@ -1874,7 +1874,7 @@
             }
         }
 
-        if($participants = 0){
+        if($participants == 0){
             $return = array(
                 '_isError' => true,
                 'reason' => 'This student is not part of the event',
