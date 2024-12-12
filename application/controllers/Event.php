@@ -1077,12 +1077,13 @@
                     ),
                 );
             } else {
+                
 
                 $event_payload = array(
                     'event_id' => $event_id,
                 );
                 $event = $this->EventModel->get_single($event_payload);
-        
+                
                 if($event->is_ended == 0){
                     // Step 1: Retrieve event participants to determine sections and programs
                     $event_participants = $this->EventModel->get_event_participants($event_id);
