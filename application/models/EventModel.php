@@ -10,6 +10,9 @@
     public function add($payload){
         return $this->db->set($payload)->get_compiled_insert('events');
     }
+    public function add_record($payload){
+        return $this->db->set($payload)->get_compiled_insert('event_records');
+    }
 
     public function add_participants($payload){
         return $this->db->set($payload)->get_compiled_insert('event_participants');
@@ -119,6 +122,19 @@
     //     // Return the result with detailed data
     //     return $result;
     // }
+    public function get_event_record($event_id){
+        $current_datetime = date('Y-m-d H:i:s'); // Format: 'YYYY-MM-DD HH:MM:SS'
+        $this->db->select('*');
+        $this->db->from('event_records');
+        $this->db->where('event_id',$event_id);
+        $query = $this->db->get();
+        if($query->num_rows() > 0){
+            return $query->result()[0];
+        }else{
+            return [];
+        }
+      
+    }
     public function get_single($payload){
         $current_datetime = date('Y-m-d H:i:s'); // Format: 'YYYY-MM-DD HH:MM:SS'
         $this->db->select('
@@ -129,6 +145,7 @@
             events.date,
             events.start_time,
             events.end_time,
+            events.is_ended,
             events.event_image,
             COUNT(events.id) AS total_participants,
             GROUP_CONCAT(DISTINCT college.short_name ORDER BY college.short_name) AS college_names,
