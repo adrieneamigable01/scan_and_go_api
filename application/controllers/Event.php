@@ -1693,7 +1693,7 @@
 
 
         $savedData = $this->get_all_face_descriptors($event_id);
-        print_r($savedData);return false;
+
     
         // Define a reasonable threshold for face match (adjustable)
         $threshold = 0.6;
