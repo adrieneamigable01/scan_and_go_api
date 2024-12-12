@@ -187,6 +187,7 @@
             events.start_time,
             events.end_time,
             events.event_image,
+            events.is_ended,
             COUNT(events.id) AS total_participants,
             GROUP_CONCAT(DISTINCT college.short_name ORDER BY college.short_name) AS college_names,
             GROUP_CONCAT(DISTINCT program.program_short_name ORDER BY program.program) AS program_names,

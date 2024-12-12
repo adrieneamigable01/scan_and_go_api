@@ -1494,7 +1494,7 @@
             if ($res) { 
                 $return = array(
                     'isError' => false,
-                    'data' => $saved,
+                    'data' => [],
                     'message' => "Successfuly edded event",
                 );
                 $this->response->output($return);
