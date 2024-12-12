@@ -155,7 +155,7 @@
         ');
         
         $this->db->from('events');
-        if(!isset($payload['event_id'])){
+        if(isset($payload['event_id'])){
             $this->db->where($payload);
         }
         // Fix for college_ids stored as JSON: remove the square brackets and handle as a CSV
