@@ -217,11 +217,18 @@
         }
         // student_id
 
+        // if(!empty($type)){
+        //     if($type == "upcomming"){
+        //         $this->db->where('CONCAT(events.date, " ", events.end_time) >', $current_datetime);
+        //     }else if($type == "ended"){
+        //         $this->db->where('CONCAT(events.date, " ", events.end_time) <', $current_datetime);
+        //     }
+        // }
         if(!empty($type)){
             if($type == "upcomming"){
-                $this->db->where('CONCAT(events.date, " ", events.end_time) >', $current_datetime);
+                $this->db->where('event.is_ended', 0);
             }else if($type == "ended"){
-                $this->db->where('CONCAT(events.date, " ", events.end_time) <', $current_datetime);
+                $this->db->where('event.is_ended', 1);
             }
         }
       
