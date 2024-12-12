@@ -55,8 +55,8 @@
             */
             try{
                 $payloadWhereIn = array();
-                $program_id = $this->input->get("program_id");
-                // $college_ids = $this->input->get("college_ids");
+                $college_id = $this->input->get("college_id");
+                $college_ids = $this->input->get("college_ids");
                 /** 
                     * Call the supploer model
                     * then call the getUser method
@@ -65,8 +65,8 @@
                 $payload = array(
                     'program.is_active' => 1,
                 );
-                if(isset($program_id)){
-                    $payloadWhereIn['program_id'] = $program_id; 
+                if(isset($college_id)){
+                    $payloadWhereIn['college_id'] = $college_id; 
                 }
 
                 if(isset($college_ids)){
