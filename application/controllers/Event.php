@@ -108,6 +108,10 @@
                     'message'        =>'Success',
                     'data'          => $request,
                 );
+                if(!empty($event_id)){
+                    $return['files'] = $this->get_files($event_id);
+                }
+
             }catch (Exception $e) {
                 //set server error
                 $return = array(
@@ -118,7 +122,25 @@
             }
             $this->response->output($return); //return the json encoded data
         }
-        
+        public function get_files($event_id) {
+            // Path to the folder containing the files
+            $directory_path = FCPATH . 'uploads/events/'.$event_id;  // FCPATH is the root folder of your project
+    
+            // Check if the directory exists
+            if (is_dir($directory_path)) {
+                // Get all files from the directory
+                $files = scandir($directory_path);
+    
+                // Remove the '.' and '..' directories from the list
+                $files = array_diff($files, array('.', '..'));
+    
+                // Return the file list as a JSON response
+              return array_values($files);
+            } else {
+                // Return an error if the directory doesn't exist
+                return [];
+            }
+        }
         public function generateHashPassword($pass,$key){
             $passwithKey = $pass.'-'.$key;
             return md5($passwithKey);
@@ -287,18 +309,18 @@
                         array_push($transQuery, $response);
                     }
 
-                  
-                    
-                    $upload = $this->uploadDocuments($event_id);
-                    if(!$upload){
-                        $return = array(
-                            '_isError' => true,
-                            'reason' => $upload,
-                        );
-                        $this->response->output($return);
-                        return false;
+                    if (isset($_FILES['documents']) && !empty($_FILES['documents']['name'][0])){
+                        $upload = $this->uploadDocuments($event_id);
+                        if(!$upload){
+                            $return = array(
+                                '_isError' => true,
+                                'reason' => $upload,
+                            );
+                            $this->response->output($return);
+                            return false;
+                        }
                     }
-                   
+                        
                     $result = array_filter($transQuery);
                     $res = $this->mysqlTQ($result);
         
@@ -1057,25 +1079,29 @@
             } else {
                 // Step 1: Retrieve event participants to determine sections and programs
                 $event_participants = $this->EventModel->get_event_participants($event_id);
+          
                 // print_r( $event_participants );exit;
                 $all_section_ids = [];
                 $all_program_ids = [];
-                
+             
                 // If section_id or program_id is not provided, get all sections and programs from event participants
                 if (empty($section_id) && empty($program_id)) {
+                  
+                  
+
                     foreach ($event_participants as $participant) {
                         // Split the comma-separated program_id and section_id into arrays
                         $program_ids = explode(',', $participant->program_id);
                         $section_ids = explode(',', $participant->section_id);
                     
                         // Merge the arrays and remove duplicates
-                        $all_section_ids = array_merge($all_program_ids, $program_ids);
-                        $all_program_ids = array_merge($all_section_ids, $section_ids);
+                        $all_section_ids = array_merge($all_section_ids, $section_ids);
+                        $all_program_ids = array_merge($all_program_ids, $program_ids);
                     }
-
+                   
                     $all_section_ids = array_unique($all_section_ids);
                     $all_program_ids = array_unique($all_program_ids);
-
+                
                     // Optional: Re-index the arrays if needed
                     $all_section_ids = array_values($all_section_ids);
                     $all_program_ids = array_values($all_program_ids);
@@ -1089,7 +1115,7 @@
                 }
 
               
-
+           
 
         
                 // Step 2: Retrieve all students and teachers based on section_ids and program_ids
@@ -1367,6 +1393,8 @@
                         'id' => $teacher->teacher_id,
                         'name' => $teacher->first_name . ' ' . $teacher->last_name,
                         'face_descriptor' => $student->face_descriptor,
+                        'time_in' => $attendance_record->time_in,
+                        'time_out' => $attendance_record->time_out
                     ];
                 } else {
                     // No attendance, mark as Absent
@@ -1374,6 +1402,8 @@
                         'id' => $teacher->teacher_id,
                         'name' => $teacher->first_name . ' ' . $teacher->last_name,
                         'face_descriptor' => $student->face_descriptor,
+                        'time_in' => null,
+                        'time_out' => null
                     ];
                 }
             }
@@ -1396,6 +1426,203 @@
         );
         
         return $combined_attendance_details;
+    }
+
+
+    public function add_attendance()
+    {
+        $transQuery      = array();
+        $date            = date("Y-m-d");
+        $attendance_type = $this->input->post("attendance_type");
+        $user_type       = $this->input->post("user_type");
+        $student_id      = $this->input->post("student_id");
+        $teacher_id      = $this->input->post("teacher_id");
+        $event_id        = $this->input->post("event_id");
+
+
+        $savedData = $this->get_all_face_descriptors($event_id);
+    
+        // Define a reasonable threshold for face match (adjustable)
+        $threshold = 0.6;
+
+        // Loop through all saved descriptors and compare with the incoming one
+        foreach ($savedData as $saved) {
+           
+
+            // If a match is found (distance below threshold), return the corresponding user data
+            if ($user_type == "student") {
+                if($saved['id'] == $student_id){
+                    if($attendance_type == "time_in" && $saved['time_in'] != null){
+                        $return = array(
+                            'isError' => true,
+                            'data' => $saved,
+                            'message' => 'This face already time_in',
+                        );
+                        $this->response->output($return);
+                        return;
+                    }else if($attendance_type == "time_out" && $saved['time_in'] == null){
+                        $return = array(
+                            'isError' => true,
+                            'data' => $saved,
+                            'message' => 'Cant timeout with a time-in',
+                        );
+                        $this->response->output($return);
+                        return;
+                    }
+                    else if($attendance_type == "time_out" && $saved['time_out'] != '00:00:00'){
+                        $return = array(
+                            'isError' => true,
+                            'data' => $saved,
+                            'message' => 'This face already time_out',
+                        );
+                        $this->response->output($return);
+                        return;
+                    }
+                    else{
+                        $date = date("Y-m-d");
+                        if($attendance_type == "time_in"){
+                            $timelog_payload['date'] = $date;
+                            $timelog_payload['time_in'] = date("H:i:s");
+                            $timelog_payload['event_id'] = $event_id;
+                            if($saved['type'] == "student"){
+                                $timelog_payload['student_id'] = $saved['id'];
+                            }else if($saved['type'] == "teacher"){
+                                $timelog_payload['teacher_id'] = $saved['id'];
+                            }
+
+                            $response = $this->EventModel->time_in($timelog_payload);
+                            array_push($transQuery, $response);
+                        }
+                        if($attendance_type == "time_out"){
+                            $timelog_payload['time_out'] = date("H:i:s");
+                            $where = array(
+                                'event_id' => $event_id,
+                            );
+
+                            if($saved['type'] == "student"){
+                                $where['student_id'] = $saved['id'];
+                            }else if($saved['type'] == "teacher"){
+                                $where['teacher_id'] = $saved['id'];
+                            }
+
+
+                            $response = $this->EventModel->time_out($timelog_payload,$where);
+                            array_push($transQuery, $response);
+                        }
+
+                        $result = array_filter($transQuery);
+                        $res = $this->mysqlTQ($result);
+            
+                        // Success response
+                        if ($res) { 
+                            $t = $attendance_type == 'time_in' ? 'Time in' : 'Time out';
+                            $return = array(
+                                'isError' => false,
+                                'data' => $saved,
+                                'message' => "Face recognized! and {$t}",
+                            );
+                            $this->response->output($return);
+                            return;
+                        }else{
+                            $return = array(
+                                '_isError' => true,
+                                'reason' => 'Error adding, please contact a support or scan you QR',
+                            );
+                            $this->response->output($return);
+                            return;
+                        }
+                    }
+                }
+            }else if ($user_type == "teacher") {
+                if($saved['id'] == $teacher_id){
+                    if($attendance_type == "time_in" && $saved['time_in'] != null){
+                        $return = array(
+                            'isError' => true,
+                            'data' => $saved,
+                            'message' => 'This face already time_in',
+                        );
+                        $this->response->output($return);
+                        return;
+                    }else if($attendance_type == "time_out" && $saved['time_in'] == null){
+                        $return = array(
+                            'isError' => true,
+                            'data' => $saved,
+                            'message' => 'Cant timeout with a time-in',
+                        );
+                        $this->response->output($return);
+                        return;
+                    }
+                    else if($attendance_type == "time_out" && $saved['time_out'] != '00:00:00'){
+                        $return = array(
+                            'isError' => true,
+                            'data' => $saved,
+                            'message' => 'This face already time_out',
+                        );
+                        $this->response->output($return);
+                        return;
+                    }
+                    else{
+                        $date = date("Y-m-d");
+                        if($attendance_type == "time_in"){
+                            $timelog_payload['date'] = $date;
+                            $timelog_payload['time_in'] = date("H:i:s");
+                            $timelog_payload['event_id'] = $event_id;
+                            if($saved['type'] == "student"){
+                                $timelog_payload['student_id'] = $saved['id'];
+                            }else if($saved['type'] == "teacher"){
+                                $timelog_payload['teacher_id'] = $saved['id'];
+                            }
+
+                            $response = $this->EventModel->time_in($timelog_payload);
+                            array_push($transQuery, $response);
+                        }
+                        if($attendance_type == "time_out"){
+                            $timelog_payload['time_out'] = date("H:i:s");
+                            $where = array(
+                                'event_id' => $event_id,
+                            );
+
+                            if($saved['type'] == "student"){
+                                $where['student_id'] = $saved['id'];
+                            }else if($saved['type'] == "teacher"){
+                                $where['teacher_id'] = $saved['id'];
+                            }
+
+
+                            $response = $this->EventModel->time_out($timelog_payload,$where);
+                            array_push($transQuery, $response);
+                        }
+
+                        $result = array_filter($transQuery);
+                        $res = $this->mysqlTQ($result);
+            
+                        // Success response
+                        if ($res) { 
+                            $t = $attendance_type == 'time_in' ? 'Time in' : 'Time out';
+                            $return = array(
+                                'isError' => false,
+                                'data' => $saved,
+                                'message' => "Face recognized! and {$t}",
+                            );
+                            $this->response->output($return);
+                            return;
+                        }else{
+                            $return = array(
+                                '_isError' => true,
+                                'reason' => 'Error adding, please contact a support or scan you QR',
+                            );
+                            $this->response->output($return);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        
+
+
+
+      
     }
 
     public function recognize_face_event_attendance(){

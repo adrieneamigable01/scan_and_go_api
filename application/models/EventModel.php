@@ -197,19 +197,19 @@
         }
         // student_id
 
-        if(isset($payload['events.event_id'])){
-            if(isset($type)){
-                if($type == "upcomming"){
-                    $this->db->where('CONCAT(events.date, " ", events.start_time) >', $current_datetime);
-                }else if($type == "ended"){
-                    $this->db->where('CONCAT(events.date, " ", events.end_time) <', $current_datetime);
-                }
+        if(!empty($type)){
+            if($type == "upcomming"){
+                $this->db->where('CONCAT(events.date, " ", events.end_time) >', $current_datetime);
+            }else if($type == "ended"){
+                $this->db->where('CONCAT(events.date, " ", events.end_time) <', $current_datetime);
             }
         }
+      
         
         // Group by the event
         $this->db->group_by('events.event_id');
         $query = $this->db->get();
+        
         $result = $query->result();
 
         if (isset($payload['events.event_id'])) {
@@ -316,6 +316,7 @@
     public function get_event_participants($event_id) {
         $this->db->select('*');
         $this->db->where('event_id', $event_id);
+        $this->db->where('event_participants.is_active', 1);
         $query = $this->db->get('event_participants');  // Assuming 'events' table contains the event information
         return $query->result();
     }
