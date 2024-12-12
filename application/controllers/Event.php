@@ -1540,8 +1540,8 @@
                 $section_ids = explode(',', $participant->section_id);
             
                 // Merge the arrays and remove duplicates
-                $all_section_ids = array_merge($all_program_ids, $program_ids);
-                $all_program_ids = array_merge($all_section_ids, $section_ids);
+                $all_program_ids = array_merge($all_program_ids, $program_ids);
+                $all_section_ids = array_merge($all_section_ids, $section_ids);
             }
 
             $all_section_ids = array_unique($all_section_ids);
@@ -1653,7 +1653,7 @@
                     $teachers_attendance_details[] = [
                         'id' => $teacher->teacher_id,
                         'name' => $teacher->first_name . ' ' . $teacher->last_name,
-                        'face_descriptor' => $student->face_descriptor,
+                        'face_descriptor' => $teacher->face_descriptor,
                         'time_in' => null,
                         'time_out' => null
                     ];
@@ -1693,6 +1693,7 @@
 
 
         $savedData = $this->get_all_face_descriptors($event_id);
+        print_r($savedData);return false;
     
         // Define a reasonable threshold for face match (adjustable)
         $threshold = 0.6;
