@@ -55,6 +55,7 @@
             */
             try{
                 $program_id = $this->input->get("program_id");
+                $year_level_id = $this->input->get("year_level_id");
                 $year_level_ids = $this->input->get("year_level_ids");
                 $program_ids = $this->input->get("program_ids");
                 /** 
@@ -72,6 +73,9 @@
                 
                 if(!empty($program_id)){
                     $payload['section.program_id'] = $program_id;
+                }
+                if(!empty($year_level_id)){
+                    $payload['section.year_level_id'] = $year_level_id;
                 }
 
   
