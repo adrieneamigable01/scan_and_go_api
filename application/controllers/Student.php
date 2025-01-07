@@ -62,13 +62,15 @@
                     * @param array $payload.
                 */
                 $student_id = $this->input->get("student_id");
+                $is_active = $this->input->get("is_active");
                 $payload = array(
-                    'students.is_active' => 1
+                    'students.is_active' => isset($is_active) ? $is_active : 1
                 );
                 $college_id = $this->input->get("college_id");
                 $program_id = $this->input->get("program_id");
                 $year_level_id = $this->input->get("year_level_id");
                 $section_id = $this->input->get("section_id");
+               
                 
                 if(!empty($college_id)){
                     $payload['students.college_id'] = $college_id;
@@ -561,6 +563,61 @@
                         $return = array(
                             '_isError' => true,
                             'reason' => 'Error void student',
+                        );
+                    }
+        
+                } catch (Exception $e) {
+                    // Handle exception and return error response
+                    $return = array(
+                        '_isError' => true,
+                        'reason' => $e->getMessage(),
+                    );
+                }
+            }
+        
+            // Output the response
+            $this->response->output($return);
+        }
+        public function activate() {
+            $transQuery = array();
+        
+            // Retrieve form data using the 'name' attributes from the HTML form
+            $student_id = $this->input->post('student_id');
+        
+            // Validation checks
+            if (empty($student_id)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'student id is required',
+                );
+            }else {
+                try {
+        
+                    // Payload array for new user data
+                    $payload = array(
+                        'is_active'   => 1,
+                        'deleted_at'  => date("Y-m-d"),
+                    );
+                    $where = array(
+                        'student_id' => $student_id
+                    );
+                    // Call model function to add user
+                    $response = $this->StudentModel->update($payload,$where);
+                    array_push($transQuery, $response);
+                    $result = array_filter($transQuery);
+                    $res = $this->mysqlTQ($result);
+        
+                    // Success response
+                    if ($res) {
+                        $return = array(
+                            '_isError' => false,
+                            'reason' => 'Successfully activate student',
+                            'data' => $payload
+                        );
+                    } else {
+                        $return = array(
+                            '_isError' => true,
+                            'reason' => 'Error activating student',
                         );
                     }
         

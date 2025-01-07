@@ -188,6 +188,7 @@
             events.end_time,
             events.event_image,
             events.is_ended,
+            events.venue,
             COUNT(events.id) AS total_participants,
             GROUP_CONCAT(DISTINCT college.short_name ORDER BY college.short_name) AS college_names,
             GROUP_CONCAT(DISTINCT program.program_short_name ORDER BY program.program) AS program_names,
@@ -226,9 +227,9 @@
         // }
         if(!empty($type)){
             if($type == "upcomming"){
-                $this->db->where('event.is_ended', 0);
+                $this->db->where('events.is_ended', 0);
             }else if($type == "ended"){
-                $this->db->where('event.is_ended', 1);
+                $this->db->where('events.is_ended', 1);
             }
         }
       

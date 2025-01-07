@@ -266,7 +266,23 @@
                 
             }
   
-              
+            
+        }
+        public function certificate(){
+           
+            ini_set('max_execution_time', 300); //300 seconds = 5 minutes
+            $paper = 'letter';
+            $orientation = "landscape";
+            $dompdf = new Dompdf();
+            $dompdf->setPaper($paper, $orientation);
+            
+            $dompdf->set_option("isPhpEnabled", true);
+            $dompdf->set_option('isHtml5ParserEnabled', true);
+            $return = array();
+            $this->pdf->load_view_landscape('pdf/certificate',$return);
+            
+            $this->pdf->render();
+            $this->pdf->stream("Attendance", array('Attachment'=>0));
         }
     }
 ?>

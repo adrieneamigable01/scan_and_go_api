@@ -46,6 +46,13 @@ class Pdf extends DOMPDF
         $html = $this->ci()->load->view($view, $data, TRUE);
         $this->load_html($html);
     }
+    public function load_view_landscape($view, $data = array())
+    {   
+        $this->setPaper('A4', 'landscape');
+        $html = $this->ci()->load->view($view, $data, TRUE);
+        $this->load_html($html);
+        
+    }
     public function load_view2($name,$view, $data = array())
     {   
         

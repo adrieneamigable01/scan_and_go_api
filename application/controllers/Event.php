@@ -176,6 +176,7 @@
             // Retrieve form data using the 'name' attributes from the HTML form
         
             $event_name = $this->input->post('event_name');
+            $event_venue = $this->input->post('event_venue');
             $event_description = $this->input->post('event_description');
             $event_date = $this->input->post('event_date');
             $start_time = $this->input->post('start_time');
@@ -196,7 +197,14 @@
                     '_isError' => true,
                     'reason' => 'Event name is required',
                 );
-            } else if (empty($event_description)) {
+            } 
+            else if (empty($event_venue)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'Event venue is required',
+                );
+            } 
+            else if (empty($event_description)) {
                 $return = array(
                     '_isError' => true,
                     'reason' => 'Event description is required',
@@ -259,6 +267,7 @@
                     $payload = array(
                         'event_id'              => $event_id,
                         'name'                  => $event_name,
+                        'venue'                  => $event_venue,
                         'description'           => $event_description,
                         'date'                  => $event_date,
                         'start_time'            => $start_time,
@@ -430,6 +439,7 @@
         
             $event_id = $this->input->post('event_id');
             $name = $this->input->post('name');
+            $venue = $this->input->post('event_venue');
             $description = $this->input->post('description');
             $date = $this->input->post('date');
             $start_time = $this->input->post('start_time');
@@ -454,7 +464,14 @@
                     '_isError' => true,
                     'reason' => 'Event name is required',
                 );
-            } else if (empty($description)) {
+            } 
+            else if (empty($venue)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'Event venue is required',
+                );
+            } 
+            else if (empty($description)) {
                 $return = array(
                     '_isError' => true,
                     'reason' => 'Event description is required',
@@ -501,6 +518,7 @@
                     // Payload array for new user data
                     $payload = array(
                         'name'                  => $name,
+                        'venue'                  => $venue,
                         'description'           => $description,
                         'date'                  => $date,
                         'college_ids'           => $college_ids,
@@ -1510,20 +1528,22 @@
             }
         }
         
+
+    // Check if the student or teacher is late based on their time_in and event start time
+    private function check_lateness($time_in, $event_id) {
+        // Assuming event has a start time field (event_start_time)
+        $event = $this->EventModel->get_event_date($event_id);  // Get event details (e.g., start time)
+        $start_time = $event->start_time;  // Get the event start time
+        
+        $allowance_time = strtotime($start_time) + 30 * 60;  // Add 30 minutes in seconds
     
-        // Check if the student or teacher is late based on their time_in and event start time
-        private function check_lateness($time_in, $event_id) {
-            // Assuming event has a start time field (event_start_time)
-            $event = $this->EventModel->get_event_date($event_id);  // Get event details (e.g., start time)
-            $start_time = $event->start_time;  // Get the event start time
-            
-            // Compare the time_in with the event_start_time
-            if ($time_in > $start_time) {
-                return 'Late';
-            } else {
-                return 'On Time';
-            }
+        // Compare the time_in with the adjusted start time (allowance time)
+        if (strtotime($time_in) > $allowance_time) {
+            return 'Late';
+        } else {
+            return 'On Time';
         }
+    }
 
     public function get_all_face_descriptors($event_id)
     {
