@@ -10,6 +10,9 @@
     public function add($payload){
         return $this->db->set($payload)->get_compiled_insert('events');
     }
+    public function addHost($payload){
+        return $this->db->set($payload)->get_compiled_insert('event_host');
+    }
     public function add_record($payload){
         return $this->db->set($payload)->get_compiled_insert('event_records');
     }
@@ -22,6 +25,10 @@
     public function update($payload,$where){
         $this->db->where($where);
         return $this->db->set($payload)->get_compiled_update('events');
+    }
+    public function updateHost($payload,$where){
+        $this->db->where($where);
+        return $this->db->set($payload)->get_compiled_update('event_host');
     }
     public function updateParticipants($payload,$where){
         $this->db->where($where);
@@ -177,6 +184,10 @@
     }
     public function get($payload,$type,$extra){
         $current_datetime = date('Y-m-d H:i:s'); // Format: 'YYYY-MM-DD HH:MM:SS'
+        $teacherQuery = null;
+        if (!empty($extra['teacher_id'])) {
+            $teacherQuery = $this->get_event_teachers($extra);
+        }
 
         $this->db->select('
             events.id,
@@ -215,6 +226,23 @@
             // Add a condition to ensure the student's section matches one of the event's sections
             $this->db->join('event_participants', 'event_participants.event_id = events.event_id', 'left');
             $this->db->where('FIND_IN_SET(' . (int)$extra['program_id'] . ', event_participants.program_id) > 0');
+        }
+        if (!empty($extra['teacher_id'])) {
+            if ($teacherQuery->num_rows() > 0) {
+                // Get the program_id from the teacher record
+                $teacher = $teacherQuery->row();
+                $teacherProgramId = (int)$teacher->program_id;
+
+                // Add condition to ensure the event's program_id matches the teacher's program_id
+                $this->db->where('FIND_IN_SET(' . (int)$teacherProgramId . ', event_participants.program_id) > 0');
+                
+            }
+        }else{
+            if (!empty($extra['program_id'])) {
+                // Add a condition to ensure the student's section matches one of the event's sections
+                $this->db->join('event_participants', 'event_participants.event_id = events.event_id', 'left');
+                $this->db->where('FIND_IN_SET(' . (int)$extra['program_id'] . ', event_participants.program_id) > 0');
+            }
         }
         // student_id
 
@@ -260,6 +288,18 @@
         }
         return $result;
 
+    }
+    private function get_event_teachers($extra){
+        $this->db->select('teachers.program_id');
+        $this->db->from('teachers');  // Assuming teacher info is in the 'teachers' table
+        $this->db->where('teacher_id', (int)$extra['teacher_id']);
+        return $this->db->get();
+    }
+    public function get_event_signature($event_id){
+        $this->db->select('*');
+        $this->db->from('event_host');
+        $this->db->where('event_id', $event_id);
+        return $this->db->get();
     }
     private function get_participant_details($participants, $table_name) {
         $details = [];

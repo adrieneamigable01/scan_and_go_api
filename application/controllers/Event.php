@@ -359,6 +359,99 @@
             // Output the response
             $this->response->output($return);
         }
+        public function add_event_host() {
+            $transQuery = array();
+        
+            // Retrieve form data using the 'name' attributes from the HTML form
+        
+            $event_host = $this->input->post('event_host');
+            $event_host_role = $this->input->post('event_host_role');
+            $signature = $this->input->post('signature');
+            $event_id = $this->input->post('event_id');
+        
+            // Validation checks
+            if (empty($event_host)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'Event host is required',
+                );
+            } 
+            else if (empty($signature)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'Event host signature is required',
+                );
+            } 
+            else if (empty($event_host_role)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'Event host role is required',
+                );
+            } 
+            else if (empty($event_id)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'Event id is required',
+                );
+            } 
+            else {
+                try {
+
+                    
+        
+                    // Payload array for new user data
+                    $payload = array(
+                        'event_host'            => $event_host,
+                        'event_host_role'  => $event_host_role,
+                        'event_host_signature'  => $signature,
+                        'date_added'            => date("Y-m-d"),
+                    );
+        
+                    $event = $this->EventModel->get_event_signature($event_id);
+                    // Call model function to add user
+                    if ($event->num_rows() > 0) {
+                        $where = array(
+                            'event_id' => $event_id
+                        );
+                        $response = $this->EventModel->updateHost($payload,$where);
+                        array_push($transQuery, $response);
+                    }else{
+                        $payload['event_id'] = $event_id;
+                        $response = $this->EventModel->addHost($payload);
+                        array_push($transQuery, $response);
+                    }
+                   
+
+                 
+                    $result = array_filter($transQuery);
+                    $res = $this->mysqlTQ($result);
+        
+                    // Success response
+                    if ($res) {
+                        $return = array(
+                            '_isError' => false,
+                            'reason' => 'Successfully host signature',
+                            'data' => $payload
+                        );
+                    } else {
+                        $return = array(
+                            '_isError' => true,
+                            'reason' => 'Error adding event host signature',
+                        );
+                    }
+        
+                } catch (Exception $e) {
+                    // Handle exception and return error response
+                    $return = array(
+                        '_isError' => true,
+                        'reason' => $e->getMessage(),
+                    );
+                }
+            }
+        
+            // Output the response
+            $this->response->output($return);
+        }
 
         function uploadDocuments($event_id){
             if (isset($_FILES['documents']) && !empty($_FILES['documents']['name'][0])) {

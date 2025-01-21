@@ -48,9 +48,27 @@ class Pdf extends DOMPDF
     }
     public function load_view_landscape($view, $data = array())
     {   
+
         $this->setPaper('A4', 'landscape');
         $html = $this->ci()->load->view($view, $data, TRUE);
         $this->load_html($html);
+        $this->render();
+
+        $x          = 490;
+        $y          = 980;
+        $text       = "Page {PAGE_NUM} of {PAGE_COUNT}";     
+        $font       = $this->getFontMetrics()->get_font('Helvetica', 'normal');   
+        $size       = 12;    
+        $color      = array(0,0,0);
+        $word_space = 0.0;
+        $char_space = 0.0;
+        $angle      = 0.0;
+
+        $this->getCanvas()->page_text(
+        $x, $y, $text, $font, $size, $color, $word_space, $char_space, $angle
+        );
+
+        $this->stream("Certificate.pdf", array('Attachment'=> 0));
         
     }
     public function load_view2($name,$view, $data = array())
