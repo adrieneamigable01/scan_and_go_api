@@ -41,6 +41,10 @@
             }
             return $key;
         }
+        public function testpass(){
+            $hashedPassword = password_hash('admin', PASSWORD_BCRYPT);
+            print_r( $hashedPassword );
+        }
         /**
             * Authenticate a user
             * 

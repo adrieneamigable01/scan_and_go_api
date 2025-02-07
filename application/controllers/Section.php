@@ -95,11 +95,60 @@
             }
             $this->response->output($return); //return the json encoded data
         }
+        public function get_with_other(){
+            /**
+             * @var string post data $key
+             * @var string session data $accessKey
+            */
+            try{
+                $program_id = $this->input->get("program_id");
+                $year_level_id = $this->input->get("year_level_id");
+                $year_level_ids = $this->input->get("year_level_ids");
+                $program_ids = $this->input->get("program_ids");
+                /** 
+                    * Call the supploer model
+                    * then call the getUser method
+                    * @param array $payload.
+                */
+                $payload = array(
+                    'section.is_active' => 1,
+                );
+
+
+
+                $whereinset = array();
+                
+                if(!empty($program_id)){
+                    $payload['section.program_id'] = $program_id;
+                }
+                if(!empty($year_level_id)){
+                    $payload['section.year_level_id'] = $year_level_id;
+                }
+
+  
+                $request = $this->SectionModel->get_with_other($payload,$year_level_ids,$program_ids);
+                $return = array(
+                    '_isError'      => false,
+                    'message'        =>'Success',
+                    'data'          => $request,
+                );
+            }catch (Exception $e) {
+                //set server error
+                $return = array(
+                    '_isError' => true,
+                    // 'code'     =>http_response_code(),
+                    'message'   => $e->getMessage(),
+                );
+            }
+            $this->response->output($return); //return the json encoded data
+        }
         public function add() {
             $transQuery = array();
         
             // Retrieve form data using the 'name' attributes from the HTML form
             $section = $this->input->post('section');
+            $program_id = $this->input->post('program_id');
+            $year_level_id = $this->input->post('year_level_id');
             $dateCreated = date("Y-m-d");
         
             // Validation checks
@@ -108,12 +157,27 @@
                     '_isError' => true,
                     'reason' => 'Section is required',
                 );
-            }  else {
+            } 
+            else if (empty($program_id)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'program_id is required',
+                );
+            } 
+            else if (empty($year_level_id)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'year_level_id is required',
+                );
+            } 
+             else {
                 try {
         
                     // Payload array for new user data
                     $payload = array(
                         'section'   => $section,
+                        'program_id'   => $program_id,
+                        'year_level_id'   => $year_level_id,
                         'created_at' => date("Y-m-d"),
                     );
         
@@ -155,6 +219,8 @@
         
             // Retrieve form data using the 'name' attributes from the HTML form
             $section_id = $this->input->post('section_id');
+            $program_id = $this->input->post('program_id');
+            $year_level_id = $this->input->post('year_level_id');
             $section = $this->input->post('section');
             $dateCreated = date("Y-m-d");
         
@@ -165,7 +231,19 @@
                     'reason' => 'Year section id is required',
                 );
             } 
-            if (empty($section)) {
+            else if (empty($program_id)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'program_id is required',
+                );
+            } 
+            else if (empty($year_level_id)) {
+                $return = array(
+                    '_isError' => true,
+                    'reason' => 'year_level_id is required',
+                );
+            } 
+            else if (empty($section)) {
                 $return = array(
                     '_isError' => true,
                     'reason' => 'Year section is required',
@@ -176,6 +254,8 @@
                     // Payload array for new user data
                     $payload = array(
                         'section'   => $section,
+                        'program_id'   => $program_id,
+                        'year_level_id'   => $year_level_id,
                         'updated_at' => date("Y-m-d"),
                     );
                     $where = array(

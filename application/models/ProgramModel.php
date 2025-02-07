@@ -17,18 +17,25 @@
     }
    
     public function get($payload,$payloadWhereIn){
-        $this->db->select('*');
+        $this->db->select('program.*, college.college, college.short_name as college_short_name'); // Adjust columns as needed
         $this->db->from('program');
+        
+        // Perform the LEFT JOIN on the college table
+        $this->db->join('college', 'college.college_id = program.college_id', 'left');
+        
+        // Apply the where condition from the payload
         $this->db->where($payload);
-     
-        if(!empty($payloadWhereIn)){
+        
+        if (!empty($payloadWhereIn)) {
             foreach ($payloadWhereIn as $key => $value) {
                 $array_where_in = explode(',', $value);
-                $this->db->where_in($key,$array_where_in);
+                $this->db->where_in($key, $array_where_in);
             }
         }
+        
         $query = $this->db->get();
         return $query->result();
+        
     }
    
  }
