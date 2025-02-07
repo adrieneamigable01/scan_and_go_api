@@ -66,11 +66,11 @@
                     'program.is_active' => 1,
                 );
                 if(isset($college_id)){
-                    $payloadWhereIn['college_id'] = $college_id; 
+                    $payloadWhereIn['program.college_id'] = $college_id; 
                 }
 
                 if(isset($college_ids)){
-                    $payloadWhereIn['college_id'] = $college_ids; 
+                    $payloadWhereIn['program.college_id'] = $college_ids; 
                 }
                 $request = $this->ProgramModel->get($payload,$payloadWhereIn);
                 $return = array(
